@@ -18,7 +18,9 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 list(REMOVE_ITEM PCL_LIBRARIES "vtkproj4")
 
-# set_source_files_properties(ransac2d.cpp PROPERTIES LANGUAGE CUDA)
-add_executable (quizRansac ransac2d.cpp ../../render/render.cpp ../../geometry/line.cpp ransac2d.cu)
-target_link_libraries (quizRansac ${PCL_LIBRARIES} ${Boost_LIBRARIES})
+# add_executable (quizRansac2d ransac2d.cpp ../../render/render.cpp ../../geometry/line.cpp ransac2d.cu)
+# target_link_libraries (quizRansac2d ${PCL_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable (quizRansac3d ransac3d.cpp ../../render/render.cpp ../../geometry/plane.cpp ransac2d.cu)
+target_link_libraries (quizRansac3d ${PCL_LIBRARIES} ${Boost_LIBRARIES})
 
