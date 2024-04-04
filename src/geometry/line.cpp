@@ -3,7 +3,7 @@
 class Line{
     // Line with equation of type : 
     // Ax + By + C = 0;
-    float A, B, C;
+    float A, B, C, denominator;
 public:
     // Constructor to create line from two points.
     // Line equation : (y2 - x1)X + (x2 - y)
@@ -11,11 +11,13 @@ public:
         A = y1 - y2;
         B = x2 - x1;
         C = x1*y2 - x2*y1;
+
+        denominator = sqrt(A*A + B*B);
     }
 
     // Calculate distance between this->line and point
     float DistanceToPoint(const float & x, const float & y){
-        return fabs(A*x + B*y + C) / sqrt(x*x + y*y);
+        return fabs(A*x + B*y + C) / denominator;
     }
 
     // TODO : 

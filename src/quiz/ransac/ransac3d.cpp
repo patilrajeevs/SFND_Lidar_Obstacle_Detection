@@ -82,11 +82,16 @@ std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int ma
 		std::cout << "*********************************************"  << std::endl;
 		std::cout << "inliersResult size = : " << inliersResult.size()  << std::endl;
 		auto it = inliersCurrent.begin();
-		auto point_1 = cloud->points[*it];
-		it++; 
-		auto point_2 = cloud->points[*it];
-		it++; 
-		auto point_3 = cloud->points[*it];
+		int point_1_index = *it;
+		auto point_1 = cloud->points[point_1_index];
+
+		it++;
+		int point_2_index = *it;
+		auto point_2 = cloud->points[point_2_index];
+
+		it++;
+		int point_3_index = *it;
+		auto point_3 = cloud->points[point_3_index];
 
 		Plane p(point_1.x, point_1.y, point_1.z,
 				point_2.x, point_2.y, point_2.z,
@@ -94,7 +99,7 @@ std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int ma
 
   	// Measure distance between every point and fitted plane
 		for(int i = 0; i < cloud_size; i++){
-			if ( i == point_1 || i == point_2 || i == point_3){
+			if ( i == point_1_index || i == point_2_index || i == point_3_index){
 				continue;
 			}
 
