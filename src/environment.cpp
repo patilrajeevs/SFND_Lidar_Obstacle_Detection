@@ -8,7 +8,15 @@
 // using templates for processPointClouds so also include .cpp to help linker
 #include "processPointClouds.cpp"
 
-std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer::Ptr& viewer)
+struct Hyperparameters{
+    float tolerance;
+    int minClusterSize;
+    int maxClusterSize;
+};
+
+
+std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer::Ptr& viewer,
+                             bool renderCars = true)
 {
 
     Car egoCar( Vect3(0,0,0), Vect3(4,2,2), Color(0,1,0), "egoCar");
@@ -25,17 +33,19 @@ std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer
     if(renderScene)
     {
         renderHighway(viewer);
-        egoCar.render(viewer);
-        car1.render(viewer);
-        car2.render(viewer);
-        car3.render(viewer);
+        if (renderCars){
+            egoCar.render(viewer);
+            car1.render(viewer);
+            car2.render(viewer);
+            car3.render(viewer);
+        }
     }
 
     return cars;
 }
 
 
-void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
+void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer, Hyperparameters & hyper_parameters)
 {
     // ----------------------------------------------------
     // -----Open 3D viewer and display simple highway -----
@@ -43,7 +53,8 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     
     // RENDER OPTIONS
     bool renderScene = true;
-    std::vector<Car> cars = initHighway(renderScene, viewer);
+    bool renderCars = false;
+    std::vector<Car> cars = initHighway(renderScene, viewer, renderCars);
 
     // TODO:: Create lidar sensor 
     Lidar *lidar = new Lidar(cars, 0);
@@ -57,8 +68,21 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     std::pair<typename pcl::PointCloud<pcl::PointXYZ>::Ptr, 
               typename pcl::PointCloud<pcl::PointXYZ>::Ptr> cloud_pair = pclProcessor->SegmentPlane(cloud, 100, 0.2);
     
-    renderPointCloud(viewer, cloud_pair.first, "road_plane_cloud", Color(0,1,0));
-    renderPointCloud(viewer, cloud_pair.second, "osbtacle_cloud", Color(1,0,0));
+    // renderPointCloud(viewer, cloud_pair.first, "road_plane_cloud", Color(0,1,0));
+    // renderPointCloud(viewer, cloud_pair.second, "osbtacle_cloud", Color(1,0,0));
+
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloudClusters = pclProcessor->Clustering(cloud_pair.second, hyper_parameters.tolerance, hyper_parameters.minClusterSize,hyper_parameters.maxClusterSize);
+    uint cluster_id = 0;
+    std::vector<Color> colors = {Color(1,0,0), Color(0,1,0), Color(0,0,1)};
+
+    for (pcl::PointCloud<pcl::PointXYZ>::Ptr cluster : cloudClusters){
+        std::cout << "cluster size = " ;
+        pclProcessor->numPoints(cluster);
+
+        renderPointCloud(viewer, cluster, "Obstacle_cloud :" + std::to_string(cluster_id),
+                         colors[cluster_id]);
+        cluster_id++;
+    }
 }
 
 
@@ -86,14 +110,30 @@ void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& vi
 }
 
 
+struct Hyperparameters ParseCommandLine(int argc, char **argv){
+    Hyperparameters hyp;
+    if(argc == 4){
+        hyp.tolerance = atof(argv[1]);
+        hyp.minClusterSize = atoi(argv[2]);
+        hyp.maxClusterSize = atoi(argv[3]);
+    }else{
+        // Default values
+        hyp.tolerance = 2;
+        hyp.minClusterSize = 15;
+        hyp.maxClusterSize = 150;
+    }
+	return hyp;
+}
+
+
 int main (int argc, char** argv)
 {
+    Hyperparameters hyper_parameters = ParseCommandLine(argc, argv);
     std::cout << "starting enviroment" << std::endl;
-
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
     CameraAngle setAngle = XY;
     initCamera(setAngle, viewer);
-    simpleHighway(viewer);
+    simpleHighway(viewer, hyper_parameters);
 
     while (!viewer->wasStopped ())
     {
